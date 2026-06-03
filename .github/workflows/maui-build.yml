@@ -1,1 +1,42 @@
+name: Build MAUI Standalone Android APK
 
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+    # Step 1: Clone your project layout into the runner workspace
+    - name: Checkout Source Files
+      uses: actions/checkout@v4
+
+    # Step 2: Provision Microsoft .NET execution environment
+    - name: Setup .NET Core SDK Platform
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: 8.0.x
+
+    # Step 3: Explicitly install the mobile target compilers directly from the official manifest
+    - name: Install Android Mobile Workloads
+      run: dotnet workload install android
+
+    # Step 4: Restore system reference packages and dependencies
+    - name: Restore Application Project Packages
+      run: dotnet restore
+
+    # Step 5: Execute compiling sequences natively into a production-ready package
+    - name: Compile and Output Standalone Android APK
+      run: dotnet publish -c Release -f net8.0-android /p:AndroidPackageFormat=apk /p:AndroidBuildApplicationPackage=true
+
+    # Step 6: Package and deliver the output asset right to your actions tab
+    - name: Upload Output Package Artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: Compiled-Strelizia-C-Sharp-APK
+        path: '**/bin/Release/net8.0-android/*-Signed.apk'
+        retention-days: 7
+        
